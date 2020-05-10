@@ -86,6 +86,33 @@ class GroupProject:
 
         print(train.dtypes) #widać, że age i y zostały zmienione
         print(train.corr()) #macierz korelacji. Liczylem na większą korelację wieku z dochodem niż 23%. Trzeba zamienić więcej kolumn na typy numeryczne
+        self.train = train
+
+
+    def splitDatasetIntoTrainAndTest(self):
+        X_train, X_test, y_train, y_test = train_test_split(self.train.drop(['y'], axis=1), self.train['y'], test_size=0.2)
+        print(X_test)
+        print(y_test)
+        return X_train, X_test, y_train, y_test
+
+    def trainAndTestClassifier(self, clf, X_train, X_test, y_train):
+        print(clf)
+        # trenowanie
+        clf.fit(X_train, y_train)
+        # testowanie
+        y_pred = clf.predict(X_test)
+        return y_pred
+
+    def getClassificationScore(self, clf_name ,y_test, y_pred):
+        print("Nazwa klasyfikatora: " + clf_name)
+        print(accuracy_score(y_test, y_pred))
+        print(confusion_matrix(y_test, y_pred))
+
 
 d = GroupProject()
 d.dataPreprocessing()
+X_train, X_test, y_train, y_test = d.splitDatasetIntoTrainAndTest() #przechwycywanie wartości funkcji
+y_pred_knn5_train = d.trainAndTestClassifier(KNeighborsClassifier(n_neighbors=5), X_train,X_train,y_train)
+y_pred_knn5_test = d.trainAndTestClassifier(KNeighborsClassifier(n_neighbors=5), X_train,X_test,y_train)
+d.getClassificationScore("kNN-5 trenowanie", y_train, y_pred_knn5_train)
+d.getClassificationScore("kNN-5 testowanie", y_test, y_pred_knn5_test)
