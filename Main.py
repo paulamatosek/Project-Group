@@ -9,6 +9,7 @@ from sklearn.impute import SimpleImputer
 from pandas import DataFrame
 from sklearn.metrics import accuracy_score, confusion_matrix, recall_score, roc_auc_score, f1_score, precision_score
 from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -154,13 +155,13 @@ X_train, X_test, y_train, y_test = d.splitDatasetIntoTrainAndTest() #przechwycyw
 # y_pred_svm_rbf_test = d.trainAndTestClassifier(SVC(kernel='rbf', gamma='auto'), X_train,X_test,y_train)
 #
 # #kNN
-# opt_k = d.optimalKforkNN(X_train, y_train)
-# print(opt_k)
-#
-# y_pred_knn_opt_train = d.trainAndTestClassifier(KNeighborsClassifier(n_neighbors=opt_k), X_train,X_train,y_train)
-# y_pred_knn_opt_test = d.trainAndTestClassifier(KNeighborsClassifier(n_neighbors=opt_k), X_train,X_test,y_train)
-# d.getClassificationScore("kNN_opt", y_train, y_pred_knn_opt_train)
-# d.getClassificationScore("kNN_opt", y_test, y_pred_knn_opt_test)
+opt_k = d.optimalKforkNN(X_train, y_train)
+print(opt_k)
+
+y_pred_knn_opt_train = d.trainAndTestClassifier(KNeighborsClassifier(n_neighbors=opt_k), X_train,X_train,y_train)
+y_pred_knn_opt_test = d.trainAndTestClassifier(KNeighborsClassifier(n_neighbors=opt_k), X_train,X_test,y_train)
+d.getClassificationScore("kNN_opt", y_train, y_pred_knn_opt_train)
+d.getClassificationScore("kNN_opt", y_test, y_pred_knn_opt_test)
 
 # #Decision Tree
 
@@ -170,8 +171,15 @@ X_train, X_test, y_train, y_test = d.splitDatasetIntoTrainAndTest() #przechwycyw
 # d.getClassificationScore("DecisionTreeTraining", y_train, y_pred_tree_train)
 # d.getClassificationScore("DecisionTreeTesting", y_test, y_pred_tree_test)
 
+#GaussianNB
+# y_pred_gnb_train = d.trainAndTestClassifier(GaussianNB(), X_train,X_train,y_train)
+# y_pred_gnb_test = d.trainAndTestClassifier(GaussianNB(), X_train,X_test,y_train)
+# d.getClassificationScore("GNB trenowanie", y_train, y_pred_gnb_train)
+# d.getClassificationScore("GNB testowanie", y_test, y_pred_gnb_test)
+
+
 #Random Forrest
-y_pred_randomForest_train = d.trainAndTestClassifier(RandomForestClassifier(), X_train,X_train,y_train)
-y_pred_randomForest_test = d.trainAndTestClassifier(RandomForestClassifier(), X_train, X_test,y_train)
-d.getClassificationScore("RF", y_train, y_pred_randomForest_train)
-d.getClassificationScore("RF", y_test, y_pred_randomForest_test)
+# y_pred_randomForest_train = d.trainAndTestClassifier(RandomForestClassifier(), X_train,X_train,y_train)
+# y_pred_randomForest_test = d.trainAndTestClassifier(RandomForestClassifier(), X_train, X_test,y_train)
+# d.getClassificationScore("RF", y_train, y_pred_randomForest_train)
+# d.getClassificationScore("RF", y_test, y_pred_randomForest_test)
