@@ -1,16 +1,19 @@
 import pandas as pd
 import numpy as np
-import matplotlib as mpl
+import matplotlib.pyplot as plt
 import sklearn as skl
 
 from seaborn import load_dataset
 from sklearn.datasets import load_iris
 from sklearn.impute import SimpleImputer
 from pandas import DataFrame
-from sklearn.metrics import accuracy_score, confusion_matrix
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, confusion_matrix, recall_score, roc_auc_score, f1_score, precision_score
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 
 class GroupProject:
@@ -103,16 +106,72 @@ class GroupProject:
         y_pred = clf.predict(X_test)
         return y_pred
 
+    def optimalKforkNN(self, X_train, y_train):
+        neighbours = np.array([k for k in range(9, 21, 2)])
+        cv_scores = []
+        for k in neighbours:
+            knn = KNeighborsClassifier(n_neighbors=k)
+            scores = cross_val_score(knn, X_train, y_train, cv=5, scoring='accuracy')
+            cv_scores.append(scores.mean())
+        opt_k = neighbours[cv_scores.index(max(cv_scores))]
+        plt.scatter(neighbours, cv_scores)
+        plt.show()
+        print("Optymalna wartość k:", opt_k)
+        return opt_k
+
+    def optimalMinSamplesSplit(self, X_train, y_train):
+        min_samples_split = np.array([k for k in range(150,500,10)])
+        cv_scores = []
+        for k in min_samples_split:
+            dt = DecisionTreeClassifier(min_samples_split = k)
+            scores = cross_val_score(dt, X_train, y_train, cv=5, scoring='accuracy')
+            cv_scores.append(scores.mean())
+        opt_split = min_samples_split[cv_scores.index(max(cv_scores))]
+        plt.scatter(min_samples_split, cv_scores)
+        plt.show()
+        print("Optymalna wartość split:", opt_split)
+        return opt_split
+
     def getClassificationScore(self, clf_name ,y_test, y_pred):
         print("Nazwa klasyfikatora: " + clf_name)
-        print(accuracy_score(y_test, y_pred))
-        print(confusion_matrix(y_test, y_pred))
+        print("Confusion matrix", confusion_matrix(y_test, y_pred))
+        print("accuracy_score", accuracy_score(y_test, y_pred))
+        print("recall_score", recall_score(y_test, y_pred))
+        # specyficzność ACC - recall
+        print("specyficzność", accuracy_score(y_test, y_pred)-recall_score(y_test, y_pred))
+        print("roc_auc_score", roc_auc_score(y_test, y_pred))
+        print("f1_score", f1_score(y_test, y_pred))
+        print("precision_score", precision_score(y_test, y_pred))
 
 
 d = GroupProject()
 d.dataPreprocessing()
 X_train, X_test, y_train, y_test = d.splitDatasetIntoTrainAndTest() #przechwycywanie wartości funkcji
-y_pred_knn5_train = d.trainAndTestClassifier(KNeighborsClassifier(n_neighbors=5), X_train,X_train,y_train)
-y_pred_knn5_test = d.trainAndTestClassifier(KNeighborsClassifier(n_neighbors=5), X_train,X_test,y_train)
-d.getClassificationScore("kNN-5 trenowanie", y_train, y_pred_knn5_train)
-d.getClassificationScore("kNN-5 testowanie", y_test, y_pred_knn5_test)
+# #Model SVM
+# y_pred_svm_lin_train = d.trainAndTestClassifier(SVC(kernel='linear'), X_train,X_train,y_train)
+# y_pred_svm_lin_test = d.trainAndTestClassifier(SVC(kernel='linear'), X_train,X_test,y_train)
+# y_pred_svm_rbf_train = d.trainAndTestClassifier(SVC(kernel='rbf', gamma='auto'), X_train,X_train,y_train)
+# y_pred_svm_rbf_test = d.trainAndTestClassifier(SVC(kernel='rbf', gamma='auto'), X_train,X_test,y_train)
+#
+# #kNN
+# opt_k = d.optimalKforkNN(X_train, y_train)
+# print(opt_k)
+#
+# y_pred_knn_opt_train = d.trainAndTestClassifier(KNeighborsClassifier(n_neighbors=opt_k), X_train,X_train,y_train)
+# y_pred_knn_opt_test = d.trainAndTestClassifier(KNeighborsClassifier(n_neighbors=opt_k), X_train,X_test,y_train)
+# d.getClassificationScore("kNN_opt", y_train, y_pred_knn_opt_train)
+# d.getClassificationScore("kNN_opt", y_test, y_pred_knn_opt_test)
+
+# #Decision Tree
+
+# opt_split = d.optimalMinSamplesSplit(X_train,y_train)
+# y_pred_tree_train = d.trainAndTestClassifier(DecisionTreeClassifier(min_samples_split = opt_split), X_train,X_train,y_train)
+# y_pred_tree_test = d.trainAndTestClassifier(DecisionTreeClassifier(min_samples_split = opt_split), X_train,X_test,y_train)
+# d.getClassificationScore("DecisionTreeTraining", y_train, y_pred_tree_train)
+# d.getClassificationScore("DecisionTreeTesting", y_test, y_pred_tree_test)
+
+#Random Forrest
+y_pred_randomForest_train = d.trainAndTestClassifier(RandomForestClassifier(), X_train,X_train,y_train)
+y_pred_randomForest_test = d.trainAndTestClassifier(RandomForestClassifier(), X_train, X_test,y_train)
+d.getClassificationScore("RF", y_train, y_pred_randomForest_train)
+d.getClassificationScore("RF", y_test, y_pred_randomForest_test)
