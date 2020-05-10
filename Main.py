@@ -9,6 +9,7 @@ from sklearn.impute import SimpleImputer
 from pandas import DataFrame
 from sklearn.metrics import accuracy_score, confusion_matrix, recall_score, roc_auc_score, f1_score, precision_score
 from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -143,6 +144,32 @@ class GroupProject:
         print("f1_score", f1_score(y_test, y_pred))
         print("precision_score", precision_score(y_test, y_pred))
 
+    def ensableClassifier(self, clfs, X_train, X_test, y_train):
+        y_preds = []
+        # trenowanie i testowanie wszystkich klasyfikatorów z listy clfs
+        for clf in clfs:
+            clf.fit(X_train, y_train)
+            y_preds.append(clf.predict(X_test))
+        # głosowanie większościowe
+        y_result = y_preds[0]
+        clf_index = 1
+        while(clf_index < len(y_preds)):
+            index = 0
+            while(index < len(y_result)):
+                y_result[index] = y_result[index] + y_preds[clf_index][index]
+                index += 1
+            clf_index += 1
+        # uśrednianie i zaokrąglanie
+        for index, y in enumerate(y_result):
+            y_result[index] = round(y_result[index]/len(clfs))
+        return y_result
+    def plotClassificationResult(self, column1, x_label, column2, y_label, y_pred):
+        plt.scatter(column1, column2, c=y_pred)
+        plt.title("Klasyfikacja próbek")
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+        plt.show()
+
 
 d = GroupProject()
 d.dataPreprocessing()
@@ -154,9 +181,9 @@ X_train, X_test, y_train, y_test = d.splitDatasetIntoTrainAndTest() #przechwycyw
 # y_pred_svm_rbf_test = d.trainAndTestClassifier(SVC(kernel='rbf', gamma='auto'), X_train,X_test,y_train)
 #
 # #kNN
-# opt_k = d.optimalKforkNN(X_train, y_train)
-# print(opt_k)
-#
+opt_k = d.optimalKforkNN(X_train, y_train)
+
+
 # y_pred_knn_opt_train = d.trainAndTestClassifier(KNeighborsClassifier(n_neighbors=opt_k), X_train,X_train,y_train)
 # y_pred_knn_opt_test = d.trainAndTestClassifier(KNeighborsClassifier(n_neighbors=opt_k), X_train,X_test,y_train)
 # d.getClassificationScore("kNN_opt", y_train, y_pred_knn_opt_train)
@@ -164,14 +191,36 @@ X_train, X_test, y_train, y_test = d.splitDatasetIntoTrainAndTest() #przechwycyw
 
 # #Decision Tree
 
-# opt_split = d.optimalMinSamplesSplit(X_train,y_train)
+opt_split = d.optimalMinSamplesSplit(X_train,y_train)
 # y_pred_tree_train = d.trainAndTestClassifier(DecisionTreeClassifier(min_samples_split = opt_split), X_train,X_train,y_train)
 # y_pred_tree_test = d.trainAndTestClassifier(DecisionTreeClassifier(min_samples_split = opt_split), X_train,X_test,y_train)
 # d.getClassificationScore("DecisionTreeTraining", y_train, y_pred_tree_train)
 # d.getClassificationScore("DecisionTreeTesting", y_test, y_pred_tree_test)
 
+#GaussianNB
+# y_pred_gnb_train = d.trainAndTestClassifier(GaussianNB(), X_train,X_train,y_train)
+# y_pred_gnb_test = d.trainAndTestClassifier(GaussianNB(), X_train,X_test,y_train)
+# d.getClassificationScore("GNB trenowanie", y_train, y_pred_gnb_train)
+# d.getClassificationScore("GNB testowanie", y_test, y_pred_gnb_test)
+
+
 #Random Forrest
-y_pred_randomForest_train = d.trainAndTestClassifier(RandomForestClassifier(), X_train,X_train,y_train)
-y_pred_randomForest_test = d.trainAndTestClassifier(RandomForestClassifier(), X_train, X_test,y_train)
-d.getClassificationScore("RF", y_train, y_pred_randomForest_train)
-d.getClassificationScore("RF", y_test, y_pred_randomForest_test)
+# y_pred_randomForest_train = d.trainAndTestClassifier(RandomForestClassifier(), X_train,X_train,y_train)
+# y_pred_randomForest_test = d.trainAndTestClassifier(RandomForestClassifier(), X_train, X_test,y_train)
+# d.getClassificationScore("RF", y_train, y_pred_randomForest_train)
+# d.getClassificationScore("RF", y_test, y_pred_randomForest_test)
+
+# klasyfikacja zespołowa
+y_pred_ensable_train = d.ensableClassifier(
+    [KNeighborsClassifier(n_neighbors=opt_k),
+     DecisionTreeClassifier(min_samples_split = opt_split),
+     RandomForestClassifier()], X_train, X_train, y_train)
+
+y_pred_ensable_test = d.ensableClassifier(
+    [KNeighborsClassifier(n_neighbors=opt_k),
+     DecisionTreeClassifier(min_samples_split = opt_split),
+     RandomForestClassifier()], X_train, X_test, y_train)
+
+d.getClassificationScore("Uczenie zespołowe trenowanie", y_train, y_pred_ensable_train)
+d.getClassificationScore("Uczenie zespołowe testowanie", y_test, y_pred_ensable_test)
+# d.plotClassificationResult(X_test['age'],'age', X_test['sex'], 'sex', y_pred_ensable_test)
